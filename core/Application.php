@@ -7,7 +7,7 @@ abstract class Application
     protected $response;
     protected $session;
     protected $db_manager;
-    // protected $router;
+    protected $router;
 
     public function __construct()
     {
@@ -87,6 +87,74 @@ abstract class Application
     public function getWebDir()
     {
         return $this->getRootDir() . '/web';
+    }
+
+    public function run()
+    {
+        try{
+            $params = $this->router->resolve($this->request->getPathInfo());
+            if($params === false)
+            {
+                throw new HttpNotFoundException('No route found for' . $this->request->getPathInfo() );
+            }
+            $controller = $params['controllers'];
+            $action = $params['action'];
+            $this->runAction($controller ,$action ,$params);
+        }catch(HttpNotFoundException $e){
+            $this->render404Page($e);
+        }
+        $this->response->send();
+    }
+
+    protected function render404Page($e){
+        $this->response->setStatusCode(404 , 'Not Found');
+        $message = $this->isDebugMode() ? $e->getMessage() : 'Page Not';
+        $message = htmlspecialchars($message ,ENT_QUOTES , 'UTF-8');
+
+        $this->response->setContent(
+<<<EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {$message}
+</body>
+</html>
+
+EOF
+        );
+    }
+    
+    public function runAction($controller_name ,$action ,$params = array())
+    {
+        $controller_class = ucfirst($controller_name) . 'Controller'; 
+        $controller = $this->findController($controller_class);
+        if($controller === false){
+            throw new HttpNotFoundException($controller_class . ' controller is not found.' );
+        }
+        $content = $controller->run($action,$params);
+        $this->response->setContent($content);
+    }
+
+    protected function findController($controller_class)
+    {
+        if(!class_exist($controller_class)){
+            $controller_class = $this->getControllerDir() . '/' . $controller_class . 'php';
+            if(!is_readable($controller_file)){
+                return false;
+            }else{
+                require_once $controller_file;
+                if(!class_exists($controller_class)){
+                    return false;
+                }
+            }
+        }
+
+        return new $controller_class($this);
     }
 
 
