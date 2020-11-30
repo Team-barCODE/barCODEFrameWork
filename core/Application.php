@@ -10,7 +10,7 @@ abstract class Application
     protected $router;
     protected $login_action = array();
 
-    public function __construct()
+    public function __construct($debug = false)
     {
         $this->setDebugMode($debug);
         $this->initialize();
@@ -147,7 +147,7 @@ EOF
 
     protected function findController($controller_class)
     {
-        if(!class_exist($controller_class)){
+        if(!class_exists($controller_class)){
             $controller_class = $this->getControllerDir() . '/' . $controller_class . 'php';
             if(!is_readable($controller_file)){
                 return false;
