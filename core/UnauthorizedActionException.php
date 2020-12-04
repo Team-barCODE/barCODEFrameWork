@@ -1,3 +1,8 @@
 <?php
 
-class UnauthorizedActionException extends Exception{};
+/**
+ * UnauthorizedActionException.
+ *
+ * @author Katsuhiro Ogawa <fivestar@nequal.jp>
+ */
+class UnauthorizedActionException extends Exception {};
